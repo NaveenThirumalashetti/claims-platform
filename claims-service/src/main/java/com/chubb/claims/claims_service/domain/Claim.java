@@ -94,6 +94,23 @@ public class Claim {
         return previous;
     }
 
+        /** Officer picks up an unassigned claim: SUBMITTED -> UNDER_REVIEW. */
+    public ClaimStatus pickUp(String officerId) {
+        if (assignedOfficerId != null) {
+            throw new ClaimConflictException("Claim is already assigned to " + assignedOfficerId);
+        }
+        ClaimStatus previous = changeStatus(ClaimStatus.UNDER_REVIEW);
+        this.assignedOfficerId = officerId;
+        return previous;
+    }
+
+    /** UNDER_REVIEW -> ASSESSED, setting the reserve (our liability estimate). */
+    public ClaimStatus assess(BigDecimal reserve) {
+        ClaimStatus previous = changeStatus(ClaimStatus.ASSESSED);
+        this.reserveAmount = reserve;
+        return previous;
+    }
+
     @PrePersist
     void onCreate() { createdAt = updatedAt = Instant.now(); }
 

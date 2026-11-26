@@ -8,12 +8,14 @@ import java.util.UUID;
 
 public record ClaimResponse(UUID id, String claimNumber, String market, ClaimType claimType,
                             ClaimStatus status, String policyNumber, LocalDate incidentDate,
-                            String description, BigDecimal claimedAmount, String currency,
+                            String description, BigDecimal claimedAmount, BigDecimal reserveAmount,
+                            String currency, String assignedOfficerId, Long version,
                             Instant createdAt, Instant updatedAt) {
 
     public static ClaimResponse from(Claim c) {
         return new ClaimResponse(c.getId(), c.getClaimNumber(), c.getMarket(), c.getClaimType(),
                 c.getStatus(), c.getPolicyNumber(), c.getIncidentDate(), c.getDescription(),
-                c.getClaimedAmount(), c.getCurrency(), c.getCreatedAt(), c.getUpdatedAt());
+                c.getClaimedAmount(), c.getReserveAmount(), c.getCurrency(),
+                c.getAssignedOfficerId(), c.getVersion(), c.getCreatedAt(), c.getUpdatedAt());
     }
 }

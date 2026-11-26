@@ -59,3 +59,34 @@
 - **Result:** The app starts and connects to Postgres, and Flyway runs V1. The Whitelabel 404 at `/` is expected, because no controller is mapped yet.
 - **Verified by:** [add this once you've done it: `/actuator/health` shows UP and `\dt` lists `claims`, `claim_status_history`, `flyway_schema_history`].
 - **Next:** `ClaimStatus` state machine, `Claim` entity with `@Version`, repository, and `POST /api/claims`.
+
+## Entry 10: First vertical slice (domain, API, error handling)
+- **Asked:** AI to start building the core: state machine, entity, repositories, DTOs, service, controller, exception handler, and a first unit test.
+- **Got:** `ClaimStatus` enum with allowed transitions, a `Claim` entity (`@Version` for optimistic locking, `BigDecimal` money, market and currency fields), `ClaimStatusHistory` audit entity, request/response records, `ClaimService`, `ClaimController`, and a `@RestControllerAdvice` returning RFC 7807 `ProblemDetail`.
+- **Accepted:**
+  - Status changes go only through `Claim.changeStatus()`, so the state machine can't be bypassed.
+  - DTOs instead of returning entities, so the API contract is separate from the DB model.
+  - Submit writes the claim and its first history row in one transaction.
+- **Changed/to review:** [add any transitions you changed, e.g. whether REJECTED should be reachable from UNDER_REVIEW].
+- **Known shortcut:** `claimantId` comes from the request body for now. It will come from the JWT once auth is added.
+
+## Entry 11: Package name mismatch (AI assumption vs my project)
+- **Problem:** The AI's code used the package `com.chubb.claims.claimsservice`, but my generated project uses `com.chubb.claims.claims_service`. VS Code wrote the `package` lines to match the folders, so imports and packages disagreed.
+- **Diagnosis:** I spotted the mismatch between the `package` line and an import in the repository file.
+- **Fix:** Bulk-replaced the package name with a `sed` command, then recompiled.
+- **Lesson:** AI can't see my project layout, so I verify generated package names and paths against the real structure before trusting the code.
+
+## Entry 12: Tests and git workflow slips
+- **Unit tests:** `ClaimStatusTest` covers the happy path, skipped stages, terminal states and the entity rejecting an illegal transition. [Add: 4 tests, all passing.]
+- **Slip 1:** Ran `./mvnw test` from the repo root, where there is no Maven wrapper. Fixed by running it from `claims-service`.
+- **Slip 2:** Ran `git commit` without `git add`, so nothing was staged and the new files stayed untracked. Fixed by staging first.
+- **Process:** Using small commits with descriptive messages, marking unverified work as WIP.
+
+## Entry 13: End-to-end verification
+- **Result:** `POST /api/claims` returned a claim with status `SUBMITTED`, a generated UUID and claim number `CLM-SG-...`, and createdAt/updatedAt timestamps.
+- **Still to confirm:** [tick these off as you do them]
+  - `GET /api/claims/{id}` returns 200 with the same claim
+  - Random UUID returns 404 with a clear message
+  - Bad input (`market: "sg"`, negative amount) returns 400 with field-level errors
+  - `claim_status_history` has one row (`null → SUBMITTED`)
+- **Next:** Officer side: claim queue, assign/pick-up with optimistic locking, and status-change endpoints that write history rows.

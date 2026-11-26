@@ -1,6 +1,9 @@
 package com.chubb.claims.claims_service.api;
 
 import com.chubb.claims.claims_service.domain.InvalidStatusTransitionException;
+import com.chubb.claims.claims_service.domain.ClaimConflictException;
+import com.chubb.claims.claims_service.domain.ClaimAccessDeniedException;
+import com.chubb.claims.claims_service.service.InfoRequestNotFoundException;
 import com.chubb.claims.claims_service.service.ClaimNotFoundException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.*;
@@ -36,5 +39,20 @@ public class GlobalExceptionHandler {
     ProblemDetail concurrent(OptimisticLockingFailureException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
                 "The claim was modified by someone else. Reload and try again.");
+    }
+
+        @ExceptionHandler(ClaimConflictException.class)
+    ProblemDetail conflict(ClaimConflictException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(ClaimAccessDeniedException.class)
+    ProblemDetail forbidden(ClaimAccessDeniedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(InfoRequestNotFoundException.class)
+    ProblemDetail infoRequestNotFound(InfoRequestNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 }

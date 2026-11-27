@@ -6,7 +6,7 @@ A claims management backend (Java 25, Spring Boot, PostgreSQL) for claimants, cl
 1. `docker compose up -d` (PostgreSQL 16)
 2. `cd claims-service && ./mvnw spring-boot:run` (Flyway creates the schema on startup)
 3. API docs: `http://localhost:8080/swagger-ui.html`
-4. Frontend: [fill in once built]
+4. Frontend: `cd claims-ui && npm install && npx ng serve --proxy-config proxy.conf.json`
 
 Demo users (password `password`): `claimant-1`, `claimant-2`, `officer-1`, `officer-2`, `manager-1`.
 Get a token with `POST /api/auth/login`, then send `Authorization: Bearer <token>`.

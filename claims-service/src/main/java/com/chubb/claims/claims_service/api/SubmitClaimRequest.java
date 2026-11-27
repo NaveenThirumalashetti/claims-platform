@@ -8,7 +8,6 @@ import java.time.LocalDate;
 public record SubmitClaimRequest(
         @NotBlank @Pattern(regexp = "[A-Z]{2}", message = "must be a 2-letter market code") String market,
         @NotNull ClaimType claimType,
-        @NotBlank String claimantId,            // TEMPORARY: will come from the JWT later
         @NotBlank String policyNumber,
         @NotNull @PastOrPresent LocalDate incidentDate,
         @NotBlank @Size(max = 4000) String description,

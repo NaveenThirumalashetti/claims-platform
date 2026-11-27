@@ -72,8 +72,11 @@ public class ClaimWorkflowService {
     }
 
     @Transactional(readOnly = true)
-    public List<ClaimInfoRequest> listInfoRequests(UUID id) {
-        load(id);
+    public List<ClaimInfoRequest> listInfoRequests(UUID id, String userId, boolean claimantOnly) {
+        Claim c = load(id);
+        if (claimantOnly && !c.getClaimantId().equals(userId)) {
+            throw new ClaimNotFoundException(id);
+        }
         return infoRequests.findByClaimIdOrderByRequestedAtAsc(id);
     }
 

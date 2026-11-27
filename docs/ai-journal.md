@@ -90,3 +90,15 @@
   - Bad input (`market: "sg"`, negative amount) returns 400 with field-level errors
   - `claim_status_history` has one row (`null → SUBMITTED`)
 - **Next:** Officer side: claim queue, assign/pick-up with optimistic locking, and status-change endpoints that write history rows.
+
+## Entry 14: Officer workflow verified
+- **Compile error:** `InfoRequestNotFoundException` had a package line (`service`) that didn't match its folder (`domain`). Fixed by correcting the package line.
+- **Surprise 409:** my first pick-up returned 409 because the `$ID` shell variable still pointed to a claim I had already taken through the whole lifecycle (SETTLED, version 6). The API behaved correctly. Lesson: create a fresh claim per test run.
+- **Verified:** pick-up by officer-1 succeeds; a second pick-up gets 409; officer-2 assessing officer-1's claim gets 403; settled claims can't transition again; [add the audit trail and concurrency results].
+
+## Entry 15: Audit trail verified; claim queue and dashboards
+- **Verified:** history for a full-lifecycle claim shows 7 ordered rows with correct actors (claimant vs officer) and reasons.
+- **Asked AI for:** a filterable, paged claim queue; a workload view per officer; a liability exposure view.
+- **Accepted:** exposure = reserve if assessed, else claimed amount; open = not REJECTED/SETTLED; grouped by market and currency, never summed across currencies; aggregates done in SQL via JPQL projections.
+- **Challenged/changed:** [note anything you changed]
+- **Limitation:** endpoints are open until JWT/roles are added.

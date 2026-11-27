@@ -19,17 +19,22 @@ public class ClaimService {
     }
 
     @Transactional
-    public Claim submit(SubmitClaimRequest r) {
-        Claim claim = Claim.submit(r.market(), r.claimType(), r.claimantId(), r.policyNumber(),
+    public Claim submit(SubmitClaimRequest r, String claimantId) {
+        Claim claim = Claim.submit(r.market(), r.claimType(), claimantId, r.policyNumber(),
                 r.incidentDate(), r.description(), r.claimedAmount(), r.currency());
         claims.save(claim);
         history.save(ClaimStatusHistory.of(claim.getId(), null, ClaimStatus.SUBMITTED,
-                r.claimantId(), "Claim submitted"));
+                claimantId, "Claim submitted"));
         return claim;
     }
 
+    /** Claimants only see their own claims; someone else's claim looks like it doesn't exist (404, no leak). */
     @Transactional(readOnly = true)
-    public Claim get(UUID id) {
-        return claims.findById(id).orElseThrow(() -> new ClaimNotFoundException(id));
+    public Claim getVisibleTo(UUID id, String userId, boolean claimantOnly) {
+        Claim c = claims.findById(id).orElseThrow(() -> new ClaimNotFoundException(id));
+        if (claimantOnly && !c.getClaimantId().equals(userId)) {
+            throw new ClaimNotFoundException(id);
+        }
+        return c;
     }
 }

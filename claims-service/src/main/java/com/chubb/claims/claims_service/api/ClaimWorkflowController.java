@@ -4,6 +4,8 @@ import com.chubb.claims.claims_service.domain.ClaimInfoRequest;
 import com.chubb.claims.claims_service.service.ClaimWorkflowService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -14,9 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/claims/{id}")
 public class ClaimWorkflowController {
-
-    // TEMPORARY: caller identity comes from X-User-Id until JWT auth replaces it.
-    private static final String USER = "X-User-Id";
 
     public record AssessRequest(@NotNull @Positive @Digits(integer = 12, fraction = 2) BigDecimal reserveAmount) {}
     public record RejectRequest(@NotBlank String reason) {}
@@ -35,47 +34,49 @@ public class ClaimWorkflowController {
     public ClaimWorkflowController(ClaimWorkflowService service) { this.service = service; }
 
     @PostMapping("/pick-up")
-    public ClaimResponse pickUp(@PathVariable UUID id, @RequestHeader(USER) String user) {
-        return ClaimResponse.from(service.pickUp(id, user));
+    public ClaimResponse pickUp(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ClaimResponse.from(service.pickUp(id, jwt.getSubject()));
     }
 
     @PostMapping("/assess")
-    public ClaimResponse assess(@PathVariable UUID id, @RequestHeader(USER) String user,
+    public ClaimResponse assess(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt,
                                 @Valid @RequestBody AssessRequest body) {
-        return ClaimResponse.from(service.assess(id, user, body.reserveAmount()));
+        return ClaimResponse.from(service.assess(id, jwt.getSubject(), body.reserveAmount()));
     }
 
     @PostMapping("/approve")
-    public ClaimResponse approve(@PathVariable UUID id, @RequestHeader(USER) String user) {
-        return ClaimResponse.from(service.approve(id, user));
+    public ClaimResponse approve(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ClaimResponse.from(service.approve(id, jwt.getSubject()));
     }
 
     @PostMapping("/reject")
-    public ClaimResponse reject(@PathVariable UUID id, @RequestHeader(USER) String user,
+    public ClaimResponse reject(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt,
                                 @Valid @RequestBody RejectRequest body) {
-        return ClaimResponse.from(service.reject(id, user, body.reason()));
+        return ClaimResponse.from(service.reject(id, jwt.getSubject(), body.reason()));
     }
 
     @PostMapping("/settle")
-    public ClaimResponse settle(@PathVariable UUID id, @RequestHeader(USER) String user) {
-        return ClaimResponse.from(service.settle(id, user));
+    public ClaimResponse settle(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ClaimResponse.from(service.settle(id, jwt.getSubject()));
     }
 
     @PostMapping("/info-requests")
-    public InfoRequestView requestInfo(@PathVariable UUID id, @RequestHeader(USER) String user,
+    public InfoRequestView requestInfo(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt,
                                        @Valid @RequestBody InfoRequestRequest body) {
-        return InfoRequestView.from(service.requestInfo(id, user, body.question()));
+        return InfoRequestView.from(service.requestInfo(id, jwt.getSubject(), body.question()));
     }
 
     @PostMapping("/info-requests/{requestId}/response")
     public InfoRequestView respond(@PathVariable UUID id, @PathVariable UUID requestId,
-                                   @RequestHeader(USER) String user,
+                                   @AuthenticationPrincipal Jwt jwt,
                                    @Valid @RequestBody InfoResponseRequest body) {
-        return InfoRequestView.from(service.respond(id, requestId, user, body.response()));
+        return InfoRequestView.from(service.respond(id, requestId, jwt.getSubject(), body.response()));
     }
 
     @GetMapping("/info-requests")
-    public List<InfoRequestView> infoRequests(@PathVariable UUID id) {
-        return service.listInfoRequests(id).stream().map(InfoRequestView::from).toList();
+    public List<InfoRequestView> infoRequests(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        boolean claimant = "CLAIMANT".equals(jwt.getClaimAsString("role"));
+        return service.listInfoRequests(id, jwt.getSubject(), claimant).stream()
+                .map(InfoRequestView::from).toList();
     }
 }

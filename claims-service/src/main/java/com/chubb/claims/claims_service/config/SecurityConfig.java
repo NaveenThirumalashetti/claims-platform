@@ -52,7 +52,8 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/auth/login", "/actuator/health").permitAll()
+                .requestMatchers("/api/auth/login", "/actuator/health",
+                    "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // claimant
                 .requestMatchers(HttpMethod.POST, "/api/claims").hasRole("CLAIMANT")
                 .requestMatchers(HttpMethod.GET, "/api/claims/mine").hasRole("CLAIMANT")

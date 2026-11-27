@@ -102,3 +102,12 @@
 - **Accepted:** exposure = reserve if assessed, else claimed amount; open = not REJECTED/SETTLED; grouped by market and currency, never summed across currencies; aggregates done in SQL via JPQL projections.
 - **Challenged/changed:** [note anything you changed]
 - **Limitation:** endpoints are open until JWT/roles are added.
+
+## Entry 16:
+- **Verified:** 401 without token, 403 for wrong role (claimant pick-up, officer submit, officer exposure), 200 for manager exposure, 404 for another claimant's claim, 200 for the owner, /mine returns only own claims, concurrent pick-up gives one 200 and one 409.
+
+## Entry 17: Minimal Angular frontend
+- **Asked AI for:** a time-boxed Angular app (login, claimant submit/track/respond, officer queue and actions, manager exposure) against the existing API.
+- **Accepted:** standalone components with signals, functional interceptor/guards, role-based routes in one app, dev-server proxy to avoid CORS (Codespaces forwarded URLs make CORS awkward).
+- **Shortcuts I chose:** `window.prompt` for small inputs, hand-written API types instead of a generated client, token in sessionStorage, no frontend tests.
+- **Verified:** [tick off the demo flow you ran, and anything you had to fix]
